@@ -1,6 +1,9 @@
 # civil
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/schmidtw/civil.svg)](https://pkg.go.dev/github.com/schmidtw/civil)
+[![Go Report Card](https://goreportcard.com/badge/github.com/schmidtw/civil)](https://goreportcard.com/report/github.com/schmidtw/civil)
+[![Apache V2 License](http://img.shields.io/badge/license-Apache%20V2-blue.svg)](https://github.com/schmidtw/civil/blob/main/LICENSE)
+[![GitHub Release](https://img.shields.io/github/release/schmidtw/civil.svg)](https://github.com/schmidtw/civil/releases)
+[![GoDoc](https://pkg.go.dev/badge/github.com/schmidtw/civil)](https://pkg.go.dev/github.com/schmidtw/civil)
 
 A zero-dependency Go package for representing civil dates.
 
