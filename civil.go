@@ -34,20 +34,42 @@ func ParseDate(s string) (Date, error) {
 	return DateOf(t), nil
 }
 
-// ParseUint32Date parses a uint32(YYYYMMDD) format date and returns the date value it represents.
+var daysInMonth = map[time.Month]int{
+	time.January:   31,
+	time.February:  29, // max days
+	time.March:     31,
+	time.April:     30,
+	time.May:       31,
+	time.June:      30,
+	time.July:      31,
+	time.August:    31,
+	time.September: 30,
+	time.October:   31,
+	time.November:  30,
+	time.December:  31,
+}
+
+// ParseUint32Date parses a uint32(YYYYMMDD) format date and returns the date
+// value it represents.
+//
+// A very simple check to see if the date is somewhat real is done.  If you want
+// to validate it completely, call IsValid().
 func ParseUint32Date(v uint32) (Date, error) {
-	year := int(v / 10000)
-	month := time.Month((v % 10000) / 100)
-	day := int(v % 100)
-
-	if month < time.January || month > time.December {
-		return Date{}, fmt.Errorf("invalid month: %d", month)
-	}
-	if day < 1 || day > 31 {
-		return Date{}, fmt.Errorf("invalid day: %d", day)
+	d := Date{
+		Year:  int(v / 10000),
+		Month: time.Month((v % 10000) / 100),
+		Day:   int(v % 100),
 	}
 
-	return Date{Year: year, Month: month, Day: day}, nil
+	days, ok := daysInMonth[d.Month]
+	if !ok {
+		return Date{}, fmt.Errorf("invalid date %d: month %d out of range", v, d.Month)
+	}
+	if d.Day < 1 || d.Day > days {
+		return Date{}, fmt.Errorf("invalid date %d: day %d out of range for %s %d", v, d.Day, d.Month, d.Year)
+	}
+
+	return d, nil
 }
 
 // String returns the date in RFC3339 full-date format.

@@ -150,6 +150,57 @@ func TestParseUint32Date(t *testing.T) {
 			input: 9990101,
 			want:  Date{999, 1, 1},
 		},
+		{
+			desc:  "year zero",
+			input: 720,
+			want:  Date{0, 7, 20},
+		},
+		{
+			desc:  "year after 9999",
+			input: 100000101,
+			want:  Date{10000, 1, 1},
+		},
+		{
+			desc:    "max uint32",
+			input:   4294967295,
+			wantErr: true,
+		},
+		{
+			desc:    "february 30",
+			input:   20260230,
+			wantErr: true,
+		},
+		{
+			desc:    "april 31",
+			input:   20260431,
+			wantErr: true,
+		},
+		{
+			desc:    "june 31",
+			input:   20260631,
+			wantErr: true,
+		},
+		{
+			desc:    "september 31",
+			input:   20260931,
+			wantErr: true,
+		},
+		{
+			desc:    "november 31",
+			input:   20261131,
+			wantErr: true,
+		},
+		{
+			desc:  "february 29 in leap year",
+			input: 20240229,
+			want:  Date{2024, 2, 29},
+		},
+		{
+			// Leap years are not checked; callers use IsValid for that.
+			desc:  "february 29 in non-leap year",
+			input: 20230229,
+			want:  Date{2023, 2, 29},
+		},
 	} {
 		t.Run(test.desc, func(t *testing.T) {
 			got, err := ParseUint32Date(test.input)
@@ -164,6 +215,33 @@ func TestParseUint32Date(t *testing.T) {
 			}
 			if got != test.want {
 				t.Errorf("ParseUint32Date(%d) = %#v, want %#v", test.input, got, test.want)
+			}
+		})
+	}
+}
+
+func TestParseUint32DateMonthMaxDays(t *testing.T) {
+	// ParseUint32Date does not check leap years, so each month's maximum is
+	// its length in a leap year. Derive it from the time package: day 0 of
+	// the following month is the last day of this one.
+	const year = 2024
+
+	for m := time.January; m <= time.December; m++ {
+		maxDay := time.Date(year, m+1, 0, 0, 0, 0, 0, time.UTC).Day()
+
+		t.Run(m.String(), func(t *testing.T) {
+			last := uint32(year*10000 + int(m)*100 + maxDay)
+			got, err := ParseUint32Date(last)
+			if err != nil {
+				t.Errorf("ParseUint32Date(%d) returned error %v, want %s %d accepted", last, err, m, maxDay)
+			}
+			if want := (Date{year, m, maxDay}); got != want {
+				t.Errorf("ParseUint32Date(%d) = %#v, want %#v", last, got, want)
+			}
+
+			over := last + 1
+			if got, err := ParseUint32Date(over); err == nil {
+				t.Errorf("ParseUint32Date(%d) = %#v, want error for %s %d", over, got, m, maxDay+1)
 			}
 		})
 	}

@@ -32,7 +32,9 @@ type, this package gives you the same API with **zero external dependencies**.
 
 ## Differences from the original
 
-- `ParseUint32Date` -- parse dates from `uint32` values in `YYYYMMDD` format
+- `ParseUint32Date` -- parse dates from `uint32` values in `YYYYMMDD` format;
+  the day is checked against the month's maximum length (February allows 29);
+  call `IsValid` for full validation, including leap years
 - `MarshalText` / `UnmarshalText` -- zero-value `Date{}` marshals to `""` and
   both `""` and `"0000-00-00"` unmarshal to the zero value instead of returning
   an error
