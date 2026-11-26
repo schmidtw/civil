@@ -1,6 +1,9 @@
 // SPDX-FileCopyrightText: 2016 Google LLC
 // SPDX-License-Identifier: Apache-2.0
 
+// Package civil implements types for civil time, a time-zone-independent
+// representation of time that follows the rules of the proleptic Gregorian
+// calendar with exactly 24-hour days.
 package civil
 
 import (
@@ -27,7 +30,7 @@ func DateOf(t time.Time) Date {
 
 // ParseDate parses a string in RFC3339 full-date format and returns the date value it represents.
 func ParseDate(s string) (Date, error) {
-	t, err := time.Parse("2006-01-02", s)
+	t, err := time.Parse(time.DateOnly, s)
 	if err != nil {
 		return Date{}, err
 	}

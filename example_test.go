@@ -43,7 +43,7 @@ func Example() {
 	// Comparison
 	fmt.Println(d.Before(tomorrow))
 	fmt.Println(d.After(tomorrow))
-	fmt.Println(d.Compare(d))
+	fmt.Println(d.Compare(tomorrow))
 
 	// Convert back to time.Time
 	t := d.In(time.UTC)
@@ -65,7 +65,7 @@ func Example() {
 	// 1
 	// true
 	// false
-	// 0
+	// -1
 	// 2024-03-15 00:00:00 +0000 UTC
 	// true
 	// false

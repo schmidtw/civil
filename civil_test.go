@@ -5,6 +5,7 @@ package civil
 
 import (
 	"encoding/json"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -227,21 +228,26 @@ func TestParseUint32DateMonthMaxDays(t *testing.T) {
 	const year = 2024
 
 	for m := time.January; m <= time.December; m++ {
-		maxDay := time.Date(year, m+1, 0, 0, 0, 0, 0, time.UTC).Day()
+		lastDay := time.Date(year, m+1, 0, 0, 0, 0, 0, time.UTC)
 
 		t.Run(m.String(), func(t *testing.T) {
-			last := uint32(year*10000 + int(m)*100 + maxDay)
+			v, err := strconv.ParseUint(lastDay.Format("20060102"), 10, 32)
+			if err != nil {
+				t.Fatalf("formatting %v as YYYYMMDD: %v", lastDay, err)
+			}
+			last := uint32(v)
+
 			got, err := ParseUint32Date(last)
 			if err != nil {
-				t.Errorf("ParseUint32Date(%d) returned error %v, want %s %d accepted", last, err, m, maxDay)
+				t.Errorf("ParseUint32Date(%d) returned error %v, want %s %d accepted", last, err, m, lastDay.Day())
 			}
-			if want := (Date{year, m, maxDay}); got != want {
+			if want := DateOf(lastDay); got != want {
 				t.Errorf("ParseUint32Date(%d) = %#v, want %#v", last, got, want)
 			}
 
 			over := last + 1
 			if got, err := ParseUint32Date(over); err == nil {
-				t.Errorf("ParseUint32Date(%d) = %#v, want error for %s %d", over, got, m, maxDay+1)
+				t.Errorf("ParseUint32Date(%d) = %#v, want error for %s %d", over, got, m, lastDay.Day()+1)
 			}
 		})
 	}
@@ -487,7 +493,7 @@ func TestDateWeekday(t *testing.T) {
 
 func TestMarshalJSON(t *testing.T) {
 	for _, test := range []struct {
-		value interface{}
+		value any
 		want  string
 	}{
 		{Date{1987, 4, 15}, `"1987-04-15"`},
@@ -523,7 +529,8 @@ func TestUnmarshalJSON(t *testing.T) {
 		}
 	}
 
-	for _, bad := range []string{"", `"bad"`, `"1987-04-15x"`,
+	for _, bad := range []string{
+		"", `"bad"`, `"1987-04-15x"`,
 		`19870415`,     // a JSON number
 		`11987-04-15x`, // not a JSON string
 

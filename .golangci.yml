@@ -3,51 +3,97 @@
 # SPDX-License-Identifier: Apache-2.0
 ---
 version: "2"
+
+run:
+  tests: true
+
 linters:
-  enable:
-    - bodyclose
-    - dupl
-    - errorlint
-    - funlen
-    - goconst
-    - gosec
-    - misspell
-    - prealloc
-    - unconvert
+  # Start from every linter and opt out of the ones that do not fit, so new
+  # linters are picked up on upgrade. Pin the golangci-lint version in CI to
+  # avoid surprise failures.
+  default: all
   disable:
-    - funlen
-    - errcheck
-    - ineffassign
+    # Style linters that conflict with idiomatic Go or with the upstream
+    # cloud.google.com/go/civil code this package tracks.
+    - exhaustruct    # zero-value structs and partial literals are idiomatic
+    - exhaustruct_v5 # see exhaustruct
+    - nlreturn       # blank-line placement is a matter of taste
+    - noinlineerr    # `if err := f(); err != nil` is idiomatic
+    - nonamedreturns # named results document meaning (e.g. DaysSince)
+    - varnamelen     # short receiver and loop names are idiomatic
+    - wsl            # deprecated; replaced by wsl_v5
+    - gomodguard     # deprecated; replaced by gomodguard_v2
+    - wsl_v5         # blank-line placement is a matter of taste
+
+    # Rules that do not suit a small calendar library.
+    - depguard         # no import policy to enforce; the package has no deps
+    - err113           # errors carry the offending value for the caller
+    - gochecknoglobals # the read-only daysInMonth table is a global
+    - mnd              # calendar numbers (31, 100, 86400) are not magic
+    - wrapcheck        # ParseDate returns time.Parse errors unchanged
+
+    # Test conventions this package does not follow.
+    - gosmopolitan # tests deliberately exercise time.Local
+    - paralleltest # tests take microseconds; parallelism adds noise
+    - testpackage  # tests need access to package internals
+    - tparallel    # see paralleltest
+
   settings:
+    errcheck:
+      check-type-assertions: true
+
     errorlint:
+      # Errors here are leaves, not wrappers, so %v is correct.
       errorf: false
-    goconst:
-      min-occurrences: 4
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - experimental
+        - opinionated
+        - performance
+        - style
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Date's field order matches the upstream type
+
     misspell:
       locale: US
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      enable-all-rules: false
+
+    usestdlibvars:
+      time-layout: true
+      time-month: true
+      time-weekday: true
+
   exclusions:
     generated: lax
     presets:
-      - comments
       - common-false-positives
-      - legacy
       - std-error-handling
     rules:
-      - linters:
+      # Table-driven tests are long, repetitive and repeat literals by design.
+      - path: _test\.go
+        linters:
           - dupl
           - funlen
-        path: _test.go
-      - linters:
-          - unused
-        path: dbn/metadata.go
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+          - goconst
+
 formatters:
+  enable:
+    - gofumpt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/schmidtw/civil
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
